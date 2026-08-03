@@ -33,7 +33,7 @@ func memoriesReset() {
 	os.WriteFile("./memoryFile", []byte{}, 0644)
 	fmt.Println("Reset Complete | 初期化完了")
 	linebreak()
-	main()
+	menuMode()
 }
 
 func linebreak() {
@@ -58,7 +58,7 @@ func chatMode() {
 		switch input {
 		case "/bye":
 			linebreak()
-			main()
+			menuMode()
 			return
 		case "":
 		default:
@@ -83,15 +83,14 @@ func configMode() {
 			return
 		case "exit":
 			linebreak()
-			main()
+			menuMode()
 			return
 		default:
 			linebreak()
 		}
 	}
 }
-
-func main() {
+func menuMode() {
 	for {
 		fmt.Println("M====MENU====M")
 		fmt.Println("* Enter the following | 以下のいずれかを入力して")
@@ -117,4 +116,8 @@ func main() {
 			linebreak()
 		}
 	}
+}
+
+func main() {
+	menuMode()
 }
