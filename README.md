@@ -3,15 +3,15 @@
 
 ## 使い方 / Usage
 ### JA
-1. ReleasesからMunouLoki.zipをダウンロード
-2. 解凍
-3. main.exeを実行
+1. Releasesから「Source code (zip)」をクリックしてダウンロード
+2. 解凍しフォルダーの奥へ歩みを進める
+3. main.exeを発見するのでそれを実行
 4. うんたらかんたら
 ### EN
-1. Download MunouLoki.zip from the “Releases”
-2. Extract the files
-3. Run main.exe
-4. Blah, blah, blah
+1. Click “Source code (zip)” under “Releases” to download it.
+2. Unzip the file and navigate to the innermost folder.
+3. Locate main.exe and run it.
+4. Blah, blah, blah...
 ## 仕組み / System
 ### JA
 まず、記憶が空の状態でユーザーからメッセージを受け取るとオウム返しします。
