@@ -3,12 +3,12 @@
 
 ## 使い方 / Usage
 ### JA
-1. Releasesから「Source code (zip)」をクリックしてダウンロード
+1. Releasesから「MunouLoki.zip」をクリックしてダウンロード
 2. 解凍しフォルダーの奥へ歩みを進める
 3. main.exeを発見するのでそれを実行
 4. うんたらかんたら
 ### EN
-1. Click “Source code (zip)” under “Releases” to download it.
+1. Click “MunouLoki.zip” under “Releases” to download it.
 2. Unzip the file and navigate to the innermost folder.
 3. Locate main.exe and run it.
 4. Blah, blah, blah...
