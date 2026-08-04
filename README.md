@@ -1,16 +1,16 @@
 # MunouLoki
-数十分で作られた人工無能です。
+最初に数十分で作られた人工無能です。
 
 ## 使い方 / Usage
 ### JA
-1. Releasesから「MunouLoki.zip」をクリックしてダウンロード
+1. Releasesから、使用している環境に合った「MunouLoki-NAME-amd64.zip」をクリックしてダウンロード
 2. 解凍しフォルダーの奥へ歩みを進める
-3. main.exeを発見するのでそれを実行
+3. main.exeやmainファイルを発見するのでそれを実行 (linuxの場合は`chmod +x main`などで権限を与える必要がある)
 4. うんたらかんたら
 ### EN
-1. Click “MunouLoki.zip” under “Releases” to download it.
-2. Unzip the file and navigate to the innermost folder.
-3. Locate main.exe and run it.
+1. From the “Releases” section, click on the “MunouLoki-NAME-amd64.zip” file that matches your system to download it.
+2. Unzip the file and navigate to the folder inside.
+3. You'll find a file named “main.exe” or “main”; run it (on Linux, you'll need to grant execution permissions using a command like `chmod +x main`).
 4. Blah, blah, blah...
 ## 仕組み / System
 ### JA

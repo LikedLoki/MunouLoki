@@ -162,7 +162,7 @@ menuLoop:
 		case "chat":
 			linebreak()
 			fmt.Println("C====CHAT====C")
-			fmt.Println("* [>>] is YOU. [<<] is LOKI")
+			fmt.Println("* \x1b[38;2;255;192;192m[>>] is YOU.\x1b[0m [<<] is LOKI")
 			fmt.Println("* Exit for /bye | * 閉じるには /bye")
 			var memory, errorI = readMemories()
 			if errorI != nil {
@@ -172,10 +172,11 @@ menuLoop:
 			var munouLoki = NMunouLoki{Memories: memory, buffer: emptyMemory}
 		chatLoop:
 			for {
-				fmt.Print("[>>] ")
+				fmt.Print("\x1b[38;2;255;192;192m[>>] ")
 				if !scanner.Scan() {
 					break menuLoop
 				}
+				fmt.Print("\x1b[0m")
 				var input = scanner.Text()
 				switch input {
 				case "/bye":
@@ -188,7 +189,6 @@ menuLoop:
 					break chatLoop
 				case "":
 				default:
-					fmt.Print("[<<] ")
 					var response = munouLoki.call(input)
 					fmt.Println(response)
 				}
