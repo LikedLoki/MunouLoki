@@ -189,6 +189,7 @@ menuLoop:
 					break chatLoop
 				case "":
 				default:
+					fmt.Print("[<<] ")
 					var response = munouLoki.call(input)
 					fmt.Println(response)
 				}
