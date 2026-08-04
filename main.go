@@ -14,8 +14,8 @@ var emptyMemory = Memory{User: "", Loki: ""}
 var emptyMemories = []Memory{}
 
 type Memory struct {
-	Loki string `json:"loki"`
-	User string `json:"user"`
+	Loki string `json:"lokiI"`
+	User string `json:"userI"`
 }
 
 type NMunouLoki struct {
@@ -97,26 +97,16 @@ func writeMemories(memories []Memory) error {
 	return nil
 }
 
-func (m *NMunouLoki) call(input string) string {
-	if m.buffer.Loki == "" {
-		m.buffer.Loki = input
-	} else {
-		m.buffer.User = input
-	}
-	if m.buffer.Loki != "" && m.buffer.User != "" {
-		m.Memories = append(m.Memories, m.buffer)
-		m.buffer = emptyMemory
-	}
+func decisionFn(m *NMunouLoki, input string, output *string) {
 	if len(m.Memories) == 0 {
-		return input
+		*output = input
 	} else {
 		var listA []string
 		for _, value := range m.Memories {
 			listA = append(listA, value.Loki)
 		}
-		var output string
 		if rand.IntN(15) < 1 {
-			output = listA[rand.IntN(len(listA))]
+			*output = listA[rand.IntN(len(listA))]
 		} else {
 			var listB []float64
 			for _, value := range listA {
@@ -124,11 +114,24 @@ func (m *NMunouLoki) call(input string) string {
 			}
 			var candidateIndexList = selectElement(listB)
 			var selectedIndex = candidateIndexList[rand.IntN(len(candidateIndexList))]
-			output = m.Memories[selectedIndex].User
+			*output = m.Memories[selectedIndex].User
 
 		}
-		return output
 	}
+}
+
+func (m *NMunouLoki) call(input string) string {
+	var output string
+	decisionFn(m, input, &output)
+	if m.buffer.Loki != "" {
+		m.buffer.User = input
+		m.Memories = append(m.Memories, m.buffer)
+	}
+	m.buffer = Memory{
+		Loki: output,
+		User: "",
+	}
+	return output
 }
 
 func memoriesReset() {
