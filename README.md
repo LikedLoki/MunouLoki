@@ -16,9 +16,9 @@
 ### JA
 まず、記憶が空の状態でユーザーからメッセージを受け取るとオウム返しします。
 そのオウム返しに対するユーザーの応答を観察し、記憶に保存します。
-次回以降、ユーザーから入力された文字列と、自身が返した文字列との類似度を比較し、最も高い物を返答に用います。
+次回以降、ユーザーから入力された文字列と、自身が返した文字列との類似度を比較し、最も高い組み合わせのユーザー側の返答を用います。
 (確率が同じ場合はランダムに選択される)
-(十分の一であえて無作為な返答をする)
+(十六分の一であえて無作為な返答をする)
 ### EN
 First, when a message is received from the user while the memory is empty, the system parrots the message back.
 It observes the user’s response to that parroted message and stores it in memory.
