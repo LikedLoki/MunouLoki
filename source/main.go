@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"math"
 	"math/rand/v2"
 	"os"
 )
@@ -14,46 +15,70 @@ var emptyMemory = Memory{User: "", Loki: ""}
 var emptyMemories = []Memory{}
 
 type Memory struct {
-	Loki string `json:"lokiI"`
-	User string `json:"userI"`
+	Loki string `json:"loki"`
+	User string `json:"user"`
 }
-
 type NMunouLoki struct {
 	Memories []Memory `json:"memories"`
 	buffer   Memory
 }
 
-func getCharNgrams(text []rune, n int) []string {
-	var ngrams = make([]string, 0, len(text)-n+1)
-	for i := 0; i+n <= len(text); i++ {
-		ngrams = append(ngrams, string(text[i:i+n]))
+func getNgrams(text string, n int) []string {
+	var fmtedTxt = []rune(text)
+	var length = len(fmtedTxt)
+	var ngrams = make([]string, 0, length-n+1)
+	for i := 0; i+n <= length; i++ {
+		ngrams = append(ngrams, string(fmtedTxt[i:i+n]))
 	}
 	return ngrams
 }
-func calcNgrams(textI string, textII string, n int) float64 {
-	var arrayI []string = getCharNgrams([]rune(textI), n)
-	var arrayII []string = getCharNgrams([]rune(textII), n)
+func calcCosine(textI string, textII string) float64 {
+	// 2, 4, 6, 8のN-gramを使い二次元配列を作成
+	var arrayI [][]string
+	var arrayII [][]string
+	for i := 2; i <= 8; i += 2 {
+		arrayI = append(arrayI, getNgrams(textI, i))
+		arrayII = append(arrayII, getNgrams(textII, i))
+	}
+
+	// 何もなかったなら切り返し
 	if len(arrayI) == 0 || len(arrayII) == 0 {
 		return 0
 	}
 
-	var setI = map[string]bool{}
-	var setII = map[string]bool{}
-	for _, value := range arrayI {
-		setI[value] = true
-	}
-	for _, value := range arrayII {
-		setII[value] = true
-	}
-
-	var count int
-	for value := range setI {
-		if setII[value] {
-			count++
+	// つくった二次元配列をそれぞれ比較
+	var list []float64
+	for i := 0; i < 4; i++ {
+		var mapI = map[string]float64{}
+		var mapII = map[string]float64{}
+		for _, value := range arrayI[i] {
+			mapI[value]++
 		}
+		for _, value := range arrayII[i] {
+			mapII[value]++
+		}
+		var dot float64
+		for value, countI := range mapI {
+			if countII, ok := mapII[value]; ok {
+				dot += countI * countII
+			}
+		}
+		var numberI, numberII float64
+		for _, n := range mapI {
+			numberI += math.Pow(n, 2)
+		}
+		for _, n := range mapII {
+			numberII += math.Pow(n, 2)
+		}
+		var resultN = math.Sqrt(numberI) * math.Sqrt(numberII)
+		list = append(list, dot/resultN)
 	}
-
-	return (2.0 * float64(count)) / float64(len(setI)+len(setII)) * 100
+	var sum float64
+	for _, value := range list {
+		sum += value
+	}
+	var average = sum / 4
+	return average
 }
 func selectElement(array []float64) []int {
 	var currentMax float64
@@ -110,7 +135,7 @@ func decisionFn(m *NMunouLoki, input string, output *string) {
 		} else {
 			var listB []float64
 			for _, value := range listA {
-				listB = append(listB, calcNgrams(value, input, 2))
+				listB = append(listB, calcCosine(value, input))
 			}
 			var candidateIndexList = selectElement(listB)
 			var selectedIndex = candidateIndexList[rand.IntN(len(candidateIndexList))]
