@@ -2,11 +2,14 @@ package main
 
 import (
 	"bufio"
-	"encoding/json"
+	"database/sql"
 	"fmt"
 	"math"
 	"math/rand/v2"
 	"os"
+	"time"
+
+	_ "modernc.org/sqlite"
 )
 
 const memoryFilePath string = "./memoryFile"
@@ -15,8 +18,8 @@ var emptyMemory = Memory{User: "", Loki: ""}
 var emptyMemories = []Memory{}
 
 type Memory struct {
-	Loki string `json:"loki"`
-	User string `json:"user"`
+	Loki string
+	User string
 }
 type NMunouLoki struct {
 	Memories []Memory `json:"memories"`
@@ -26,6 +29,9 @@ type NMunouLoki struct {
 func getNgrams(text string, n int) []string {
 	var fmtedTxt = []rune(text)
 	var length = len(fmtedTxt)
+	if length < n {
+		return []string{text}
+	}
 	var ngrams = make([]string, 0, length-n+1)
 	for i := 0; i+n <= length; i++ {
 		ngrams = append(ngrams, string(fmtedTxt[i:i+n]))
@@ -71,6 +77,9 @@ func calcCosine(textI string, textII string) float64 {
 			numberII += math.Pow(n, 2)
 		}
 		var resultN = math.Sqrt(numberI) * math.Sqrt(numberII)
+		if resultN == 0 {
+			list = append(list, 0.0)
+		}
 		list = append(list, dot/resultN)
 	}
 	var sum float64
@@ -96,26 +105,69 @@ func selectElement(array []float64) []int {
 	return equalList
 }
 
-func readMemories() ([]Memory, error) {
-	var memoriesJSON, errorI = os.ReadFile(memoryFilePath)
-	if errorI != nil {
-		fmt.Println(errorI)
-		return []Memory{}, errorI
+/*
+	func readMemories() ([]Memory, error) {
+		var memoriesJSON, errorI = os.ReadFile(memoryFilePath)
+		if errorI != nil {
+			fmt.Println(errorI)
+			return []Memory{}, errorI
+		}
+		var memoriesStruct []Memory
+		var errorII = json.Unmarshal(memoriesJSON, &memoriesStruct)
+		if errorII != nil {
+			fmt.Println(errorII)
+			return emptyMemories, errorII
+		}
+		return memoriesStruct, nil
 	}
-	var memoriesStruct []Memory
-	var errorII = json.Unmarshal(memoriesJSON, &memoriesStruct)
+
+	func writeMemories(memories []Memory) error {
+		var MLJSON, errorI = json.Marshal(memories)
+		if errorI != nil {
+			return errorI
+		}
+		var errorII = os.WriteFile(memoryFilePath, MLJSON, 0644)
+		if errorII != nil {
+			return errorII
+		}
+		return nil
+	}
+*/
+
+func readMemories(database *sql.DB) ([]Memory, error) {
+	var createTableSQL = `CREATE TABLE IF NOT EXISTS memories ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "loki" TEXT, "user" TEXT, "date" TEXT);`
+	var _, errorI = database.Exec(createTableSQL)
+	if errorI != nil {
+		return nil, errorI
+	}
+
+	var selectSQL = `SELECT loki, user FROM memories`
+	var rows, errorII = database.Query(selectSQL)
 	if errorII != nil {
-		fmt.Println(errorII)
-		return emptyMemories, errorII
+		return nil, errorII
 	}
-	return memoriesStruct, nil
+	defer rows.Close()
+
+	var memories []Memory
+	for rows.Next() {
+		var m Memory
+		var errorII = rows.Scan(&m.Loki, &m.User)
+		if errorII != nil {
+			return nil, errorII
+		}
+		memories = append(memories, m)
+	}
+
+	if errorII := rows.Err(); errorII != nil {
+		return nil, errorII
+	}
+
+	return memories, nil
 }
-func writeMemories(memories []Memory) error {
-	var MLJSON, errorI = json.Marshal(memories)
-	if errorI != nil {
-		return errorI
-	}
-	var errorII = os.WriteFile(memoryFilePath, MLJSON, 0644)
+func writeMemories(database *sql.DB, memory Memory) error {
+	date := time.Now().Format("2006-01-02|15:04:05")
+	var insertSQL = `INSERT INTO memories (loki, user, date) VALUES (?, ?, ?)`
+	var _, errorII = database.Exec(insertSQL, memory.Loki, memory.User, date)
 	if errorII != nil {
 		return errorII
 	}
@@ -145,12 +197,13 @@ func decisionFn(m *NMunouLoki, input string, output *string) {
 	}
 }
 
-func (m *NMunouLoki) call(input string) string {
+func (m *NMunouLoki) call(database *sql.DB, input string) string {
 	var output string
 	decisionFn(m, input, &output)
 	if m.buffer.Loki != "" {
 		m.buffer.User = input
 		m.Memories = append(m.Memories, m.buffer)
+		writeMemories(database, m.buffer)
 	}
 	m.buffer = Memory{
 		Loki: output,
@@ -159,8 +212,8 @@ func (m *NMunouLoki) call(input string) string {
 	return output
 }
 
-func memoriesReset() {
-	os.WriteFile(memoryFilePath, []byte("[]"), 0644)
+func memoriesReset(database *sql.DB) {
+	database.Exec("DROP TABLE memories")
 	fmt.Println("Reset Complete | 初期化完了")
 	linebreak()
 }
@@ -170,6 +223,12 @@ func linebreak() {
 }
 
 func menuMode() {
+	var database, errorI = sql.Open("sqlite", "./memoryFile")
+	if errorI != nil {
+		fmt.Println(errorI)
+		return
+	}
+	defer database.Close()
 	var scanner = bufio.NewScanner(os.Stdin)
 menuLoop:
 	for {
@@ -189,9 +248,9 @@ menuLoop:
 			fmt.Println("C====CHAT====C")
 			fmt.Println("* \x1b[38;2;255;192;192m[>>] is YOU.\x1b[0m [<<] is LOKI")
 			fmt.Println("* Exit for /bye | * 閉じるには /bye")
-			var memory, errorI = readMemories()
-			if errorI != nil {
-				fmt.Println(errorI)
+			var memory, errorII = readMemories(database)
+			if errorII != nil {
+				fmt.Println(errorII)
 				break menuLoop
 			}
 			var munouLoki = NMunouLoki{Memories: memory, buffer: emptyMemory}
@@ -206,16 +265,11 @@ menuLoop:
 				switch input {
 				case "/bye":
 					linebreak()
-					var errorI = writeMemories(munouLoki.Memories)
-					if errorI != nil {
-						fmt.Println(errorI)
-						break menuLoop
-					}
 					break chatLoop
 				case "":
 				default:
 					fmt.Print("[<<] ")
-					var response = munouLoki.call(input)
+					var response = munouLoki.call(database, input)
 					fmt.Println(response)
 				}
 			}
@@ -236,7 +290,7 @@ menuLoop:
 				switch input {
 				case "reset":
 					linebreak()
-					memoriesReset()
+					memoriesReset(database)
 					break configLoop
 				case "exit":
 					linebreak()
